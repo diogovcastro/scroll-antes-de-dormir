@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Arquivos pessoais (não versionar)
+arvore-de-arquivos.txt
