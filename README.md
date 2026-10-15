@@ -109,7 +109,8 @@ scroll-antes-de-dormir/
 ├── notebooks/        # notebooks de cada etapa do projeto
 ├── src/              # código reutilizável
 ├── reports/
-│   └── figures/      # gráficos gerados
+│   ├── figures/      # gráficos gerados
+│   └── metrics/      # métricas dos modelos
 ├── pyproject.toml
 ├── uv.lock
 ├── LICENSE
