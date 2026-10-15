@@ -2177,7 +2177,7 @@ wheels = [
 [[package]]
 name = "scroll-antes-de-dormir"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "ipykernel" },
     { name = "jupyterlab" },

@@ -107,7 +107,8 @@ scroll-antes-de-dormir/
 │   ├── raw/          # dados originais, sem alterações
 │   └── processed/    # dados limpos e divididos
 ├── notebooks/        # notebooks de cada etapa do projeto
-├── src/              # código reutilizável
+├── src/
+│   └── scroll_sono/  # pacote com o código reutilizável
 ├── reports/
 │   ├── figures/      # gráficos gerados
 │   └── metrics/      # métricas dos modelos
@@ -146,7 +147,7 @@ cd scroll-antes-de-dormir
 uv sync
 ```
 
-O `uv sync` cria o ambiente virtual (`.venv`) e instala exatamente as versões registradas no `uv.lock`. Se a versão do Python exigida não estiver instalada, o uv baixa ela automaticamente.
+O `uv sync` cria o ambiente virtual (`.venv`) e instala exatamente as versões registradas no `uv.lock`. Se a versão do Python exigida não estiver instalada, o uv baixa ela automaticamente. O código de `src/` também é instalado, como o pacote `scroll_sono`, e pode ser importado nos notebooks (`from scroll_sono import ...`).
 
 ### 3. Abrir os notebooks
 
