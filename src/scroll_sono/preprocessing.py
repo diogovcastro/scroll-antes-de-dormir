@@ -1,16 +1,19 @@
 """Pré-processamento de cada algoritmo.
 
-Cada função devolve um ``ColumnTransformer`` ainda não ajustado. Ele deve ser colocado
-dentro de um ``Pipeline`` junto com o modelo, para que o ajuste (fit) aconteça só nos
-dados de treino de cada fold.
+``make_preprocessor`` devolve um ``ColumnTransformer`` ainda não ajustado, e
+``Preprocessor`` o envolve para que as opções possam ser ajustadas pelo ``GridSearchCV``.
+Os dois devem ser colocados dentro de um ``Pipeline`` junto com o modelo, para que o
+ajuste (fit) aconteça só nos dados de treino de cada fold.
 """
 
 import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import (FunctionTransformer, KBinsDiscretizer, MinMaxScaler, OneHotEncoder,
                                    OrdinalEncoder, StandardScaler)
+from sklearn.utils.validation import check_is_fitted
 
 from scroll_sono.config import BINARY_COLS, NOMINAL_COLS, NUMERIC_COLS, ORDINAL_COLS
 
@@ -120,3 +123,34 @@ def make_preprocessor(algorithm: str, features: list[str], log_transform: bool =
         passos.append(("bin", SimpleImputer(strategy="most_frequent"), cols["binarias"]))
 
     return ColumnTransformer(passos, remainder="drop", verbose_feature_names_out=False)
+
+
+class Preprocessor(TransformerMixin, BaseEstimator):
+    """Versão de ``make_preprocessor`` com as opções como parâmetros do scikit-learn.
+
+    Assim, ``log_transform``, ``n_bins`` e ``scaler`` podem ser ajustados pelo
+    ``GridSearchCV`` como qualquer hiperparâmetro (ex.: ``prep__log_transform``). O
+    ``ColumnTransformer`` é montado e ajustado a cada ``fit``.
+    """
+
+    def __init__(self, algorithm: str = "tree", features: list[str] | None = None,
+                 log_transform: bool = False, n_bins: int = 5, scaler: str = "standard"):
+        self.algorithm = algorithm
+        self.features = features
+        self.log_transform = log_transform
+        self.n_bins = n_bins
+        self.scaler = scaler
+
+    def fit(self, X, y=None):
+        self.transformer_ = make_preprocessor(self.algorithm, self.features, self.log_transform,
+                                              self.n_bins, self.scaler)
+        self.transformer_.fit(X, y)
+        return self
+
+    def transform(self, X):
+        check_is_fitted(self, "transformer_")
+        return self.transformer_.transform(X)
+
+    def get_feature_names_out(self, input_features=None):
+        check_is_fitted(self, "transformer_")
+        return self.transformer_.get_feature_names_out()

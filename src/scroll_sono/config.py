@@ -13,9 +13,11 @@ TEST_DATA_PATH = PROCESSED_DIR / "test.csv"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 METRICS_DIR = REPORTS_DIR / "metrics"
+RESULTS_PATH = METRICS_DIR / "resultados.csv"
 
 RANDOM_STATE = 42
 TEST_SIZE = 0.2
+CV_SPLITS = 10  # folds da validação cruzada estratificada
 
 # Colunas especiais
 ID_COL = "user_id"
