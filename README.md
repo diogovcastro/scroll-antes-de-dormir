@@ -20,6 +20,15 @@ Prever a variável alvo **`sleep_debt_category`** a partir de atributos demográ
 - **Naive Bayes**
 - **Árvore de Decisão**
 
+### Cenários de atributos
+
+A etapa de validação mostrou que o alvo é reproduzido com 100% de acerto por uma regra simples sobre `total_sleep_hours` e `next_day_fatigue_score`, ou seja, essas colunas vazam a resposta (*data leakage*). Por isso, cada modelo é treinado em dois cenários:
+
+| Cenário | Atributos | Papel |
+|---|---|---|
+| **Comportamental** | As 10 colunas de **perfil** e **antes de dormir** | **Principal.** Usa só o que se conhece antes da noite de sono e responde à pergunta do projeto |
+| **Completo** | As 16 colunas, exceto o identificador e o alvo | **Comparação.** Inclui as medidas do sono e do dia seguinte, para medir o efeito do vazamento |
+
 ### Classes da variável alvo
 
 | Classe | Significado | Registros | % |
@@ -40,7 +49,7 @@ As classes são **ordenadas** (de melhor para pior) e **desbalanceadas**. Mais d
 
 ### Dicionário de variáveis
 
-A coluna **Momento** indica quando a informação é obtida em relação à noite de sono. Isso importa porque atributos medidos *durante* o sono ou *no dia seguinte* podem conter informação da própria resposta (*data leakage*), e o uso deles como preditores será avaliado na etapa de validação. O próprio autor do dataset sugere priorizar os atributos comportamentais (cafeína, app, tempo de tela) em vez das medidas fisiológicas.
+A coluna **Momento** indica quando a informação é obtida em relação à noite de sono. Isso importa porque atributos medidos *durante* o sono ou *no dia seguinte* podem conter informação da própria resposta (*data leakage*). Por isso, eles entram apenas no cenário **completo** (ver [cenários de atributos](#cenários-de-atributos)). O próprio autor do dataset sugere priorizar os atributos comportamentais (cafeína, app, tempo de tela) em vez das medidas fisiológicas.
 
 | Variável | Tipo | Descrição | Domínio | Momento |
 |---|---|---|---|---|
@@ -60,10 +69,10 @@ A coluna **Momento** indica quando a informação é obtida em relação à noit
 | `deep_sleep_pct` | Numérico (contínuo) | Estimativa da % do sono total em sono profundo (ondas lentas) | 8,1 – 28 | Durante o sono |
 | `rem_sleep_pct` | Numérico (contínuo) | Estimativa da % do sono total na fase REM (*Rapid Eye Movement*) | 9,6 – 27 | Durante o sono |
 | `morning_alarm_snoozes` | Numérico (inteiro) | Número de vezes que o participante adiou o despertador pela manhã | 0 – 7 | Dia seguinte |
-| `next_day_fatigue_score` | Numérico (contínuo) | Cansaço subjetivo no dia seguinte, em escala de 1,0 a 10,0. É o alvo de regressão sugerido pelo autor, e aqui é usado apenas como atributo | 1 – 10 | Dia seguinte |
+| `next_day_fatigue_score` | Numérico (contínuo) | Cansaço subjetivo no dia seguinte, em escala de 1,0 a 10,0. É o alvo de regressão sugerido pelo autor, e aqui é usado apenas como atributo, no cenário completo | 1 – 10 | Dia seguinte |
 | **`sleep_debt_category`** | **Categórico ordinal (alvo)** | **Alvo multiclasse que define a gravidade do débito de sono** | ver [classes](#classes-da-variável-alvo) | Alvo |
 
-> As descrições seguem a documentação das colunas publicada pelo autor no Kaggle. Os domínios foram observados nos dados brutos e serão confirmados na etapa de validação.
+> As descrições seguem a documentação das colunas publicada pelo autor no Kaggle. Os domínios foram observados nos dados brutos e confirmados na etapa de validação.
 
 ## 🔄 Etapas do projeto
 
@@ -83,7 +92,7 @@ Feita **apenas no conjunto de treino**. Inclui as distribuições dos atributos,
 Transformações que **aprendem com os dados** (imputação, tratamento de outliers, codificação, normalização, discretização, redução de dimensionalidade). Ficam encapsuladas em *pipelines* do scikit-learn, ajustados somente no treino para evitar *data leakage*. Cada algoritmo tem o seu próprio pré-processamento, já que eles têm necessidades diferentes (ex.: o KNN exige normalização, a árvore de decisão não).
 
 ### 6. Modelagem e validação
-Treina os três classificadores e um *baseline*. Usa **validação cruzada k-fold estratificada** no treino para comparar os modelos e ajustar os hiperparâmetros, e faz uma avaliação final única no conjunto de teste (*holdout*). As métricas são a acurácia, a acurácia balanceada, o F1-score e a matriz de confusão.
+Treina os três classificadores e um *baseline* nos dois [cenários de atributos](#cenários-de-atributos). Usa **validação cruzada k-fold estratificada** no treino para comparar os modelos e ajustar os hiperparâmetros, e faz uma avaliação final única no conjunto de teste (*holdout*). As métricas são a acurácia, a acurácia balanceada, o F1-score e a matriz de confusão. A diferença entre os cenários mostra quanto do desempenho vem do vazamento de informação.
 
 ### 7. Resultados
 Compara o desempenho dos modelos, analisa os atributos mais importantes e apresenta as conclusões e limitações do estudo.
@@ -91,6 +100,17 @@ Compara o desempenho dos modelos, analisa os atributos mais importantes e aprese
 ## 📈 Resultados
 
 > Em breve.
+
+**Cenário comportamental (principal)**
+
+| Modelo | Acurácia | Acurácia balanceada | F1 (macro) |
+|---|---|---|---|
+| Baseline | — | — | — |
+| KNN | — | — | — |
+| Naive Bayes | — | — | — |
+| Árvore de Decisão | — | — | — |
+
+**Cenário completo (comparação)**
 
 | Modelo | Acurácia | Acurácia balanceada | F1 (macro) |
 |---|---|---|---|
