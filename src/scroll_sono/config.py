@@ -7,6 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_PATH = DATA_DIR / "raw" / "bedtime_screentime_sleep_debt.csv"
 PROCESSED_DIR = DATA_DIR / "processed"
+CLEAN_DATA_PATH = PROCESSED_DIR / "sleep_clean.csv"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 METRICS_DIR = REPORTS_DIR / "metrics"
