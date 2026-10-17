@@ -8,11 +8,14 @@ DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_PATH = DATA_DIR / "raw" / "bedtime_screentime_sleep_debt.csv"
 PROCESSED_DIR = DATA_DIR / "processed"
 CLEAN_DATA_PATH = PROCESSED_DIR / "sleep_clean.csv"
+TRAIN_DATA_PATH = PROCESSED_DIR / "train.csv"
+TEST_DATA_PATH = PROCESSED_DIR / "test.csv"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 METRICS_DIR = REPORTS_DIR / "metrics"
 
 RANDOM_STATE = 42
+TEST_SIZE = 0.2
 
 # Colunas especiais
 ID_COL = "user_id"
