@@ -86,7 +86,7 @@ Aplica as correções **determinísticas** encontradas na validação: padroniza
 Divide a base limpa em treino e teste, com **estratificação** pela variável alvo por causa do desbalanceamento das classes. A partir daqui, o conjunto de teste só é usado na avaliação final.
 
 ### 4. Análise exploratória (EDA)
-Feita **apenas no conjunto de treino**. Inclui as distribuições dos atributos, a identificação e análise de outliers, as correlações entre variáveis numéricas e categóricas e a relação de cada atributo com a variável alvo, com visualizações gráficas. As conclusões guiam as decisões de pré-processamento.
+Feita **apenas no conjunto de treino**: olhar o teste e tomar decisões com base nele também seria uma forma de vazamento de informação, mesmo sem nenhum código. Inclui as distribuições dos atributos, a identificação e análise de outliers, as correlações entre variáveis numéricas e categóricas e a relação de cada atributo com a variável alvo, com visualizações gráficas. As conclusões guiam as decisões de pré-processamento.
 
 ### 5. Pré-processamento
 Transformações que **aprendem com os dados** (imputação, tratamento de outliers, codificação, normalização, discretização, redução de dimensionalidade). Ficam encapsuladas em *pipelines* do scikit-learn, ajustados somente no treino para evitar *data leakage*. Cada algoritmo tem o seu próprio pré-processamento, já que eles têm necessidades diferentes (ex.: o KNN exige normalização, a árvore de decisão não).
