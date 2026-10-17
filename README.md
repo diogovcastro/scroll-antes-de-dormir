@@ -92,7 +92,7 @@ Feita **apenas no conjunto de treino**: olhar o teste e tomar decisões com base
 Transformações que **aprendem com os dados** (imputação, tratamento de outliers, codificação, normalização, discretização, redução de dimensionalidade). Ficam encapsuladas em *pipelines* do scikit-learn, ajustados somente no treino para evitar *data leakage*. Cada algoritmo tem o seu próprio pré-processamento, já que eles têm necessidades diferentes (ex.: o KNN exige normalização, a árvore de decisão não).
 
 ### 6. Modelagem e validação
-Treina os três classificadores e um *baseline* nos dois [cenários de atributos](#cenários-de-atributos). Usa **validação cruzada k-fold estratificada** no treino para comparar os modelos e ajustar os hiperparâmetros, e faz uma avaliação final única no conjunto de teste (*holdout*). As métricas são a acurácia, a acurácia balanceada, o F1-score e a matriz de confusão. A diferença entre os cenários mostra quanto do desempenho vem do vazamento de informação.
+Treina os três classificadores e um *baseline* nos dois [cenários de atributos](#cenários-de-atributos). Usa **validação cruzada estratificada com 10 folds** no treino, os mesmos para todos os modelos, para comparar os modelos e ajustar os hiperparâmetros (escolhidos pelo F1 macro), e faz uma avaliação final única no conjunto de teste (*holdout*). O Naive Bayes é testado em duas versões, Gaussiano e Categórico. As métricas são a acurácia, a acurácia balanceada, o F1 macro e a matriz de confusão. A diferença entre os cenários mostra quanto do desempenho vem do vazamento de informação.
 
 ### 7. Resultados
 Compara o desempenho dos modelos, analisa os atributos mais importantes e apresenta as conclusões e limitações do estudo.
