@@ -10,7 +10,7 @@
 
 Projeto de **mineração de dados** que investiga como os hábitos de uso do celular antes de dormir se relacionam com a qualidade do sono, e constrói modelos de classificação para **prever a categoria de débito de sono** de uma pessoa.
 
-> Projeto feito durante a disciplina de Mineração de Dados.
+> Projeto feito em dupla durante a disciplina de Mineração de Dados.
 
 ## 🎯 Objetivo
 
@@ -22,7 +22,7 @@ Prever a variável alvo **`sleep_debt_category`** a partir de atributos demográ
 
 ### Cenários de atributos
 
-A etapa de validação mostrou que o alvo é reproduzido com 100% de acerto por uma regra simples sobre `total_sleep_hours` e `next_day_fatigue_score`, ou seja, essas colunas vazam a resposta (*data leakage*). Por isso, cada modelo é treinado em dois cenários:
+A etapa de validação mostrou que o alvo é reproduzido com 100% de acerto por uma regra simples sobre `total_sleep_hours` e `next_day_fatigue_score`, ou seja, essas colunas vazam a resposta (*data leakage*). Por isso, cada modelo é treinado em dois cenários, definidos pelo momento em que cada informação é obtida (ver o [dicionário](#dicionário-de-variáveis)):
 
 | Cenário | Atributos | Papel |
 |---|---|---|
@@ -92,14 +92,14 @@ Feita **apenas no conjunto de treino**: olhar o teste e tomar decisões com base
 Transformações que **aprendem com os dados** (imputação, tratamento de outliers, codificação, normalização, discretização, redução de dimensionalidade). Ficam encapsuladas em *pipelines* do scikit-learn, ajustados somente no treino para evitar *data leakage*. Cada algoritmo tem o seu próprio pré-processamento, já que eles têm necessidades diferentes (ex.: o KNN exige normalização, a árvore de decisão não).
 
 ### 6. Modelagem e validação
-Treina os três classificadores e um *baseline* nos dois [cenários de atributos](#cenários-de-atributos). Usa **validação cruzada estratificada com 10 folds** no treino, os mesmos para todos os modelos, para comparar os modelos e ajustar os hiperparâmetros (escolhidos pelo F1 macro), e faz uma avaliação final única no conjunto de teste (*holdout*). O Naive Bayes é testado em duas versões, Gaussiano e Categórico. As métricas são a acurácia, a acurácia balanceada, o F1 macro e a matriz de confusão. A diferença entre os cenários mostra quanto do desempenho vem do vazamento de informação.
+Treina os três classificadores e um *baseline* nos dois [cenários de atributos](#cenários-de-atributos). Usa **validação cruzada estratificada com 10 folds** no treino, os mesmos para todos os modelos, para comparar os modelos e ajustar os hiperparâmetros (escolhidos pelo F1 macro), e faz a avaliação final no conjunto de teste (*holdout*). O Naive Bayes é testado em duas versões, Gaussiano e Categórico, e a árvore com as categorias em códigos inteiros ou em one-hot. As métricas são a acurácia, a acurácia balanceada, o F1 macro e a matriz de confusão. A diferença entre os cenários mostra quanto do desempenho vem do vazamento de informação.
 
 ### 7. Resultados
 Compara o desempenho dos modelos nos dois cenários, analisa os erros e os atributos mais importantes (importância da árvore e importância por permutação) e apresenta as conclusões e limitações do estudo. Os modelos são recriados a partir dos hiperparâmetros salvos na etapa 6, sem repetir a busca.
 
 ## 📈 Resultados
 
-Métricas no conjunto de teste, usado uma única vez, depois de os hiperparâmetros serem escolhidos por validação cruzada no treino. Os valores completos, com a média e o desvio da validação cruzada, estão em [`reports/metrics/resultados.csv`](reports/metrics/resultados.csv).
+Métricas no conjunto de teste, depois de os hiperparâmetros serem escolhidos por validação cruzada no treino. Os valores completos, com a média e o desvio da validação cruzada, estão em [`reports/metrics/resultados.csv`](reports/metrics/resultados.csv).
 
 **Cenário comportamental (principal)**
 
@@ -107,9 +107,9 @@ Métricas no conjunto de teste, usado uma única vez, depois de os hiperparâmet
 |---|---:|---:|---:|
 | Baseline | 0,525 | 0,250 | 0,172 |
 | KNN | 0,648 | 0,533 | 0,563 |
-| Naive Bayes Gaussiano | **0,701** | **0,625** | **0,637** |
+| Naive Bayes Gaussiano | 0,701 | **0,625** | 0,637 |
 | Naive Bayes Categórico | 0,690 | 0,553 | 0,594 |
-| Árvore de Decisão | 0,695 | 0,624 | 0,634 |
+| Árvore de Decisão | **0,713** | 0,623 | **0,646** |
 
 **Cenário completo (comparação)**
 
@@ -123,37 +123,40 @@ Métricas no conjunto de teste, usado uma única vez, depois de os hiperparâmet
 
 ![F1 macro no teste nos dois cenários](reports/figures/07_comparacao_cenarios.png)
 
-- **No cenário comportamental, a árvore de decisão e o Naive Bayes Gaussiano empatam** (F1 macro de 0,634 e 0,637 no teste). Na validação cruzada, a árvore ficou um pouco à frente (0,632 × 0,613), dentro do desvio entre os folds. Os dois acertam cerca de 70% dos registros, contra 52,5% do baseline, que sempre prevê `Moderate Debt`.
+- **No cenário comportamental, a árvore de decisão e o Naive Bayes Gaussiano têm desempenhos próximos** (F1 macro de 0,646 e 0,637 no teste). Na validação cruzada, a árvore ficou à frente (0,646 × 0,613), em um único experimento, sem teste estatístico. Os dois acertam cerca de 70% dos registros, contra 52,5% do baseline, que sempre prevê `Moderate Debt`.
 - **O cenário completo mostra o vazamento:** com as horas de sono e a fadiga do dia seguinte, a árvore acerta 100%, porque o alvo é definido a partir dessas colunas.
-- **O teste confirmou a validação cruzada**, com diferenças de no máximo 0,023 no F1 macro.
+- **O teste ficou próximo da validação cruzada**, com diferenças de no máximo 0,023 no F1 macro.
+- **A árvore usa one-hot nas categorias.** Com códigos inteiros, a ordem alfabética das categorias influenciava as divisões da árvore (F1 macro de 0,632 na validação cruzada). A codificação foi escolhida pela validação cruzada (ver [limitações](#limitações)).
 
 ### Onde os modelos erram
 
 ![Matriz de confusão da árvore de decisão](reports/figures/07_matriz_confusao_arvore.png)
 
-95% dos erros da árvore ficam entre classes vizinhas, e nenhum registro de `Optimal Recovery` ou `Mild Deficit` é confundido com `Severe Sleep Debt`. O débito severo é a classe mais difícil: a árvore encontra 57% dos casos, e o restante é previsto como `Moderate Debt`.
+95% dos erros da árvore ficam entre classes vizinhas, e nenhum registro de `Optimal Recovery` ou `Mild Deficit` é confundido com `Severe Sleep Debt`. `Mild Deficit`, entre o sono reparador e o débito moderado, é a classe com menos acertos (46%). A identificação dos casos de `Severe Sleep Debt` ainda é limitada: a árvore encontra metade deles, e o restante é previsto como `Moderate Debt`.
 
 ### Atributos mais importantes
 
 ![Importância dos atributos](reports/figures/07_importancia_atributos.png)
 
-Os **minutos de celular na cama** e o **cronotipo** dominam a previsão, tanto na árvore quanto no Naive Bayes Gaussiano. A ocupação vem em terceiro, por causa dos profissionais de saúde e de turnos. Brilho da tela, filtro de luz azul, tipo de aplicativo e cafeína pouco acrescentam quando esses atributos já são conhecidos.
+Os **minutos de celular na cama** e o **cronotipo** dominam a previsão, tanto na árvore quanto no Naive Bayes Gaussiano. A ocupação vem em terceiro, por causa dos profissionais de saúde e de turnos. Nestes modelos, brilho da tela, filtro de luz azul, tipo de aplicativo e cafeína pouco acrescentam quando esses atributos já são conhecidos; isso descreve a contribuição deles para a previsão, não a ausência de efeito sobre o sono.
 
 ![Classes extremas por cronotipo e tempo de celular na cama](reports/figures/07_tempo_de_tela_cronotipo.png)
 
-Os dois efeitos se somam: entre os matutinos (`Morning Lark`) que usam o celular por até 30 minutos, 77% têm sono reparador; entre os vespertinos (`Night Owl`) que passam mais de 2 horas no celular, 82% estão em débito severo.
+Os dois efeitos se somam. No treino, 77% dos registros de pessoas matutinas (`Morning Lark`) que usam o celular por até 30 minutos têm sono reparador, e 82% dos de pessoas vespertinas (`Night Owl`) que passam mais de 2 horas no celular estão em débito severo.
 
 ### Conclusões
 
-- **Os hábitos antes de dormir permitem prever a categoria de débito de sono bem acima do acaso**, mas não com precisão: cerca de 70% de acerto, com erros quase sempre de um nível.
-- **O que mais pesa é o tempo de celular na cama combinado com o cronotipo.** O mesmo tempo de tela tem efeitos diferentes em quem é matutino e em quem é vespertino.
-- **O débito severo é o mais difícil de antecipar** só com os hábitos: pouco mais da metade dos casos é identificada.
-- **Os modelos simples empatam.** A árvore de decisão, que além disso é fácil de interpretar, e o Naive Bayes Gaussiano têm o mesmo desempenho; o KNN fica atrás, porque os atributos pouco informativos atrapalham as distâncias.
+- **Os hábitos antes de dormir permitem prever a categoria de débito de sono bem acima do acaso**, mas não com precisão: cerca de 70% de acerto no teste, com erros quase sempre de um nível.
+- **Nos modelos avaliados, o que mais pesa é o tempo de celular na cama combinado com o cronotipo.** O mesmo tempo de tela está associado a resultados diferentes em quem é matutino e em quem é vespertino.
+- **A identificação do débito severo ainda é limitada** só com os hábitos: metade dos casos é identificada.
+- **A árvore de decisão e o Naive Bayes Gaussiano têm desempenhos próximos**, e a árvore ainda é fácil de interpretar. O KNN fica atrás; com só os três atributos principais, ele sobe de 0,578 para 0,638 de F1 macro na validação cruzada, em um teste exploratório, o que sugere que os atributos pouco informativos atrapalham as distâncias.
 
 ### Limitações
 
 - **Dados sintéticos:** os resultados refletem as regras da simulação que gerou a base, não necessariamente o comportamento de pessoas reais.
-- **Associação, não causa:** os modelos mostram quais hábitos acompanham o débito de sono, não que mudar um hábito muda o sono.
+- **Associação, não causa:** os modelos mostram quais hábitos acompanham o débito de sono, não que mudar um hábito muda o sono. A importância dos atributos também é específica dos modelos avaliados.
+- **Uso do teste:** a codificação one-hot da árvore foi incluída depois de o teste já ter sido usado uma vez (com códigos inteiros, a árvore tinha F1 macro de 0,634 no teste). Ela foi escolhida só pela validação cruzada, mas, a rigor, o teste deixou de ser totalmente independente das decisões.
+- **Vazamento investigado na base inteira:** a regra que reproduz o alvo foi encontrada na etapa 1, antes da separação treino/teste. Isso não afeta o cenário principal, cujas colunas foram escolhidas pelo momento da coleta, mas o mais rigoroso seria fazer essa investigação só no treino.
 - **Uma noite por pessoa:** não dá para separar os hábitos de um dia dos hábitos de costume.
 - **O alvo é definido pelas horas de sono e pela fadiga**, que os hábitos antes de dormir explicam só em parte; isso limita o cenário comportamental, principalmente no débito severo.
 
@@ -214,6 +217,11 @@ uv run jupyter lab
 ```
 
 Execute os notebooks na ordem numérica.
+
+## 👥 Autores
+
+- Diogo Vieira ([@diogovcastro](https://github.com/diogovcastro))
+- [@LemonCandles](https://github.com/LemonCandles)
 
 ## 📄 Licença
 
