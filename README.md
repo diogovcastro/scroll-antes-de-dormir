@@ -10,14 +10,14 @@
 
 Projeto de **mineração de dados** que investiga como os hábitos de uso do celular antes de dormir se relacionam com a qualidade do sono, e constrói modelos de classificação para **prever a categoria de débito de sono** de uma pessoa.
 
-> 🚧 Projeto em desenvolvimento, feito durante a disciplina de Mineração de Dados.
+> Projeto feito durante a disciplina de Mineração de Dados.
 
 ## 🎯 Objetivo
 
 Prever a variável alvo **`sleep_debt_category`** a partir de atributos demográficos, de rotina e de uso de telas, comparando três algoritmos de classificação:
 
 - **K-Nearest Neighbors (KNN)**
-- **Naive Bayes**
+- **Naive Bayes** (Gaussiano e Categórico)
 - **Árvore de Decisão**
 
 ### Cenários de atributos
@@ -95,29 +95,67 @@ Transformações que **aprendem com os dados** (imputação, tratamento de outli
 Treina os três classificadores e um *baseline* nos dois [cenários de atributos](#cenários-de-atributos). Usa **validação cruzada estratificada com 10 folds** no treino, os mesmos para todos os modelos, para comparar os modelos e ajustar os hiperparâmetros (escolhidos pelo F1 macro), e faz uma avaliação final única no conjunto de teste (*holdout*). O Naive Bayes é testado em duas versões, Gaussiano e Categórico. As métricas são a acurácia, a acurácia balanceada, o F1 macro e a matriz de confusão. A diferença entre os cenários mostra quanto do desempenho vem do vazamento de informação.
 
 ### 7. Resultados
-Compara o desempenho dos modelos, analisa os atributos mais importantes e apresenta as conclusões e limitações do estudo.
+Compara o desempenho dos modelos nos dois cenários, analisa os erros e os atributos mais importantes (importância da árvore e importância por permutação) e apresenta as conclusões e limitações do estudo. Os modelos são recriados a partir dos hiperparâmetros salvos na etapa 6, sem repetir a busca.
 
 ## 📈 Resultados
 
-> Em breve.
+Métricas no conjunto de teste, usado uma única vez, depois de os hiperparâmetros serem escolhidos por validação cruzada no treino. Os valores completos, com a média e o desvio da validação cruzada, estão em [`reports/metrics/resultados.csv`](reports/metrics/resultados.csv).
 
 **Cenário comportamental (principal)**
 
 | Modelo | Acurácia | Acurácia balanceada | F1 (macro) |
-|---|---|---|---|
-| Baseline | — | — | — |
-| KNN | — | — | — |
-| Naive Bayes | — | — | — |
-| Árvore de Decisão | — | — | — |
+|---|---:|---:|---:|
+| Baseline | 0,525 | 0,250 | 0,172 |
+| KNN | 0,648 | 0,533 | 0,563 |
+| Naive Bayes Gaussiano | **0,701** | **0,625** | **0,637** |
+| Naive Bayes Categórico | 0,690 | 0,553 | 0,594 |
+| Árvore de Decisão | 0,695 | 0,624 | 0,634 |
 
 **Cenário completo (comparação)**
 
 | Modelo | Acurácia | Acurácia balanceada | F1 (macro) |
-|---|---|---|---|
-| Baseline | — | — | — |
-| KNN | — | — | — |
-| Naive Bayes | — | — | — |
-| Árvore de Decisão | — | — | — |
+|---|---:|---:|---:|
+| Baseline | 0,525 | 0,250 | 0,172 |
+| KNN | 0,830 | 0,770 | 0,795 |
+| Naive Bayes Gaussiano | 0,870 | 0,899 | 0,859 |
+| Naive Bayes Categórico | 0,956 | 0,961 | 0,936 |
+| Árvore de Decisão | **1,000** | **1,000** | **1,000** |
+
+![F1 macro no teste nos dois cenários](reports/figures/07_comparacao_cenarios.png)
+
+- **No cenário comportamental, a árvore de decisão e o Naive Bayes Gaussiano empatam** (F1 macro de 0,634 e 0,637 no teste). Na validação cruzada, a árvore ficou um pouco à frente (0,632 × 0,613), dentro do desvio entre os folds. Os dois acertam cerca de 70% dos registros, contra 52,5% do baseline, que sempre prevê `Moderate Debt`.
+- **O cenário completo mostra o vazamento:** com as horas de sono e a fadiga do dia seguinte, a árvore acerta 100%, porque o alvo é definido a partir dessas colunas.
+- **O teste confirmou a validação cruzada**, com diferenças de no máximo 0,023 no F1 macro.
+
+### Onde os modelos erram
+
+![Matriz de confusão da árvore de decisão](reports/figures/07_matriz_confusao_arvore.png)
+
+95% dos erros da árvore ficam entre classes vizinhas, e nenhum registro de `Optimal Recovery` ou `Mild Deficit` é confundido com `Severe Sleep Debt`. O débito severo é a classe mais difícil: a árvore encontra 57% dos casos, e o restante é previsto como `Moderate Debt`.
+
+### Atributos mais importantes
+
+![Importância dos atributos](reports/figures/07_importancia_atributos.png)
+
+Os **minutos de celular na cama** e o **cronotipo** dominam a previsão, tanto na árvore quanto no Naive Bayes Gaussiano. A ocupação vem em terceiro, por causa dos profissionais de saúde e de turnos. Brilho da tela, filtro de luz azul, tipo de aplicativo e cafeína pouco acrescentam quando esses atributos já são conhecidos.
+
+![Classes extremas por cronotipo e tempo de celular na cama](reports/figures/07_tempo_de_tela_cronotipo.png)
+
+Os dois efeitos se somam: entre os matutinos (`Morning Lark`) que usam o celular por até 30 minutos, 77% têm sono reparador; entre os vespertinos (`Night Owl`) que passam mais de 2 horas no celular, 82% estão em débito severo.
+
+### Conclusões
+
+- **Os hábitos antes de dormir permitem prever a categoria de débito de sono bem acima do acaso**, mas não com precisão: cerca de 70% de acerto, com erros quase sempre de um nível.
+- **O que mais pesa é o tempo de celular na cama combinado com o cronotipo.** O mesmo tempo de tela tem efeitos diferentes em quem é matutino e em quem é vespertino.
+- **O débito severo é o mais difícil de antecipar** só com os hábitos: pouco mais da metade dos casos é identificada.
+- **Os modelos simples empatam.** A árvore de decisão, que além disso é fácil de interpretar, e o Naive Bayes Gaussiano têm o mesmo desempenho; o KNN fica atrás, porque os atributos pouco informativos atrapalham as distâncias.
+
+### Limitações
+
+- **Dados sintéticos:** os resultados refletem as regras da simulação que gerou a base, não necessariamente o comportamento de pessoas reais.
+- **Associação, não causa:** os modelos mostram quais hábitos acompanham o débito de sono, não que mudar um hábito muda o sono.
+- **Uma noite por pessoa:** não dá para separar os hábitos de um dia dos hábitos de costume.
+- **O alvo é definido pelas horas de sono e pela fadiga**, que os hábitos antes de dormir explicam só em parte; isso limita o cenário comportamental, principalmente no débito severo.
 
 ## 📁 Estrutura do repositório
 
