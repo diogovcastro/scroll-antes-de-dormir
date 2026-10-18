@@ -38,6 +38,7 @@ PARAM_GRIDS = {
         "model__alpha": [0.001, 0.01, 0.1, 0.5, 1.0, 2.0],
     },
     "tree": {
+        "prep__nominal_encoding": ["ordinal", "onehot"],
         "model__max_depth": [3, 4, 5, 6, 8, 10, 15, None],
         "model__min_samples_leaf": [1, 5, 10, 20, 50, 100],
         "model__class_weight": [None, "balanced"],

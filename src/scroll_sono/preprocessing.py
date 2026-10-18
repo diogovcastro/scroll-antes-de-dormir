@@ -25,6 +25,9 @@ ALGORITHMS = ("knn", "gaussian_nb", "categorical_nb", "tree")
 # Escalas disponíveis para o KNN
 SCALERS = {"standard": StandardScaler, "minmax": MinMaxScaler}
 
+# Codificações das nominais disponíveis para a árvore
+NOMINAL_ENCODINGS = ("ordinal", "onehot")
+
 
 def split_columns(features: list[str]) -> dict[str, list[str]]:
     """Separa as colunas de um cenário pelo tipo, mantendo a ordem do cenário."""
@@ -65,7 +68,8 @@ def _numeric_transformers(numericas: list[str], log_transform: bool, final) -> l
 
 
 def make_preprocessor(algorithm: str, features: list[str], log_transform: bool = False,
-                      n_bins: int = 5, scaler: str = "standard") -> ColumnTransformer:
+                      n_bins: int = 5, scaler: str = "standard",
+                      nominal_encoding: str = "ordinal") -> ColumnTransformer:
     """Monta o pré-processamento de um algoritmo para as colunas de um cenário.
 
     - ``knn``: log1p opcional + escala nas numéricas; ordinal + escala no cronotipo;
@@ -74,7 +78,11 @@ def make_preprocessor(algorithm: str, features: list[str], log_transform: bool =
     - ``gaussian_nb``: log1p opcional nas numéricas; ordinal no cronotipo; one-hot nas nominais.
     - ``categorical_nb``: numéricas discretizadas por frequências iguais (quantis);
       categóricas em códigos inteiros.
-    - ``tree``: numéricas sem transformação; categóricas em códigos inteiros.
+    - ``tree``: numéricas sem transformação; cronotipo ordinal; nominais em códigos inteiros
+      (``nominal_encoding="ordinal"``) ou one-hot (``nominal_encoding="onehot"``). A árvore
+      faz cortes do tipo ``código <= 1,5``, então com códigos inteiros a ordem (alfabética)
+      das categorias influencia as divisões; o one-hot permite isolar qualquer categoria
+      com um único corte.
 
     Antes de tudo, os valores ausentes são imputados: mediana nas numéricas (menos sensível
     aos outliers que a média) e moda nas categóricas e na binária. A base atual não tem
@@ -85,6 +93,8 @@ def make_preprocessor(algorithm: str, features: list[str], log_transform: bool =
         raise ValueError(f"Algoritmo desconhecido: {algorithm!r}. Use um de {ALGORITHMS}.")
     if scaler not in SCALERS:
         raise ValueError(f"Escala desconhecida: {scaler!r}. Use uma de {tuple(SCALERS)}.")
+    if nominal_encoding not in NOMINAL_ENCODINGS:
+        raise ValueError(f"Codificação desconhecida: {nominal_encoding!r}. Use uma de {NOMINAL_ENCODINGS}.")
     cols = split_columns(features)
     one_hot = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
     passos = []
@@ -117,7 +127,8 @@ def make_preprocessor(algorithm: str, features: list[str], log_transform: bool =
         if cols["ordinais"]:
             passos.append(("ord", _ordinal_encoder(cols["ordinais"]), cols["ordinais"]))
         if cols["nominais"]:
-            passos.append(("nom", _categorical(OrdinalEncoder()), cols["nominais"]))
+            codificador = one_hot if nominal_encoding == "onehot" else OrdinalEncoder()
+            passos.append(("nom", _categorical(codificador), cols["nominais"]))
 
     if cols["binarias"]:
         passos.append(("bin", SimpleImputer(strategy="most_frequent"), cols["binarias"]))
@@ -128,22 +139,24 @@ def make_preprocessor(algorithm: str, features: list[str], log_transform: bool =
 class Preprocessor(TransformerMixin, BaseEstimator):
     """Versão de ``make_preprocessor`` com as opções como parâmetros do scikit-learn.
 
-    Assim, ``log_transform``, ``n_bins`` e ``scaler`` podem ser ajustados pelo
-    ``GridSearchCV`` como qualquer hiperparâmetro (ex.: ``prep__log_transform``). O
-    ``ColumnTransformer`` é montado e ajustado a cada ``fit``.
+    Assim, ``log_transform``, ``n_bins``, ``scaler`` e ``nominal_encoding`` podem ser
+    ajustados pelo ``GridSearchCV`` como qualquer hiperparâmetro (ex.:
+    ``prep__log_transform``). O ``ColumnTransformer`` é montado e ajustado a cada ``fit``.
     """
 
     def __init__(self, algorithm: str = "tree", features: list[str] | None = None,
-                 log_transform: bool = False, n_bins: int = 5, scaler: str = "standard"):
+                 log_transform: bool = False, n_bins: int = 5, scaler: str = "standard",
+                 nominal_encoding: str = "ordinal"):
         self.algorithm = algorithm
         self.features = features
         self.log_transform = log_transform
         self.n_bins = n_bins
         self.scaler = scaler
+        self.nominal_encoding = nominal_encoding
 
     def fit(self, X, y=None):
         self.transformer_ = make_preprocessor(self.algorithm, self.features, self.log_transform,
-                                              self.n_bins, self.scaler)
+                                              self.n_bins, self.scaler, self.nominal_encoding)
         self.transformer_.fit(X, y)
         return self
 
